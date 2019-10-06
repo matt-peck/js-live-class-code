@@ -4,7 +4,8 @@
   "description": "",
   "main": "src/server.js",
   "scripts": {
-    "test": "tape -r babel-register 'src/**/*spec.js'"
+    "test": "tape -r babel-register 'src/**/*spec.js'",
+    "publish": "surge ./"
   },
   "babel": {
     "presets": [

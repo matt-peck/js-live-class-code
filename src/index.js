@@ -1,5 +1,6 @@
 const todoList = document.querySelector('#todoList');
 const todoFilterBtn = document.querySelector('#todoFilterBtn');
+const addTodoInput = document.querySelector('#addTodoInput');
 
 const state = {
   todos: [
@@ -7,32 +8,47 @@ const state = {
     { id: 1, title: 'Second todo', complete: true },
     { id: 2, title: 'Third todo', complete: false }
   ],
-  hideComplete: false
+  hideComplete: false,
+  editingTodoId: null
 };
 
 const deleteTodo = (id) => {
-  // return a function that once again captures id of todos in closure
-  // then deletes todo from state
   return () => {
     state.todos = state.todos.filter(t => t.id !== id);
-
-    renderTodoList(state.hideComplete);
+    renderTodoList();
   };
 };
 
-const toggleTodoComplete = (id) => {
-  // return a function that captures the id this function was bound to in a closure
-  // an use it to toggle that todo's complete property
-  return () => {
-    state.todos = state.todos.map(t => {
-      if (t.id === id) {
-        return { ...t, complete: !t.complete };
-      }
-      return t;
-    });
+const toggleTodoEditing = (id) => {
+  state.editingTodoId = id;
+  renderTodoList();
+};
 
-    renderTodoList(state.hideComplete);
-  };
+const updateTodoItem = (id, title) => {
+  state.todos = state.todos.map(t => {
+    if (t.id === id) {
+      return {
+        ...t,
+        title
+      };
+    }
+    return t;
+  });
+  renderTodoList();
+};
+
+const toggleTodoComplete = (id) => {
+  state.todos = state.todos.map(t => {
+    if (t.id === id) {
+      return {
+        ...t,
+        complete: !t.complete
+      };
+    }
+    return t;
+  });
+
+  renderTodoList();
 };
 
 const renderFilterBtnText = () => {
@@ -42,7 +58,7 @@ const renderFilterBtnText = () => {
 
 const toggleViewFilter = () => {
   state.hideComplete = !state.hideComplete;
-  renderTodoList(state.hideComplete);
+  renderTodoList();
 };
 todoFilterBtn.addEventListener('click', toggleViewFilter);
 
@@ -55,18 +71,43 @@ const createDeleteBtn = (clickHandler) => {
   return span;
 };
 
-const createTodoItem = (id, title, complete) => {
-  // create list item element and add todo title
+const createTodoItem = ({ id, title, complete }) => {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = title;
+
   const li = document.createElement('li');
-  li.textContent = title;
+
+  const todoTitle = document.createElement('span');
+  todoTitle.textContent = title;
+
+  const completeBtn = document.createElement('input');
+  completeBtn.type = 'checkbox';
+  completeBtn.checked = complete;
+  completeBtn.classList = 'action__complete';
 
   // figure out if todo has been completed and add class
   const isComplete = complete;
   const classNames = isComplete ? 'todo--complete' : '';
   li.classList = classNames;
 
-  // add click handler
-  li.onclick = toggleTodoComplete(id);
+  // add event handlers
+  // li.onclick = toggleTodoComplete(id);
+  todoTitle.onclick = () => toggleTodoEditing(id);
+  completeBtn.onclick = () => toggleTodoComplete(id);
+  input.onchange = () => updateTodoItem(id, input.value);
+  input.onblur = () => toggleTodoEditing(null);
+  input.onkeypress = (e) => {
+    if (e.keyCode === 13) {
+      toggleTodoEditing(null);
+    }
+  };
+
+  // add complete checkbox
+  li.appendChild(completeBtn);
+
+  // add text span
+  li.appendChild(todoTitle);
 
   // add delete button if todo is incomplete
   if (!complete) {
@@ -74,24 +115,31 @@ const createTodoItem = (id, title, complete) => {
     li.appendChild(deleteBtn);
   }
 
-  // return the list item element
-  return li;
+  // return the right type of element based on editing mode
+  const element = state.editingTodoId === id ? input : li;
+  return element;
 };
 
-const renderTodoList = (hideComplete) => {
+const renderTodoList = () => {
   // empty todo list's list item elements
   todoList.innerHTML = '';
 
   // filter todos based on hideComplete parameter
-  const filteredTodos = hideComplete
+  const filteredTodos = state.hideComplete
     ? state.todos.filter(t => !t.complete)
     : state.todos;
 
   // iterate over state and create list items
-  const todos = filteredTodos.map(t => createTodoItem(t.id, t.title, t.complete));
-
   // iterate over todo nodes and append to todo list
-  todos.forEach(t => todoList.appendChild(t));
+  filteredTodos.forEach(t => {
+    const element = createTodoItem(t);
+    todoList.appendChild(element)
+
+    // focus on the input
+    if (state.editingTodoId === t.id) {
+      element.focus();
+    }
+  });
 
   // update filter button text
   renderFilterBtnText();
@@ -100,4 +148,21 @@ const renderTodoList = (hideComplete) => {
   // console.log('todo list rendered!');
 };
 
-renderTodoList(state.hideComplete);
+const addTodo = (value) => {
+  state.todos.push({
+    id: state.todos.length,
+    title: value,
+    complete: false
+  });
+  addTodoInput.value = '';
+  renderTodoList();
+};
+
+const handleAddTodo = (e) => {
+  if (e.keyCode === 13 && e.target.value.trim()) {
+    addTodo(e.target.value);
+  }
+};
+addTodoInput.addEventListener('keypress', handleAddTodo);
+
+renderTodoList();

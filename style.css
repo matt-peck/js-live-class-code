@@ -1,0 +1,16 @@
+html {
+  font-family: 'Panama';
+}
+
+ul li {
+  cursor: pointer;
+}
+
+.action__delete {
+    margin-left: 15px;
+    color: red;
+}
+
+.todo--complete {
+  text-decoration: line-through;
+}

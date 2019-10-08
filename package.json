@@ -4,9 +4,8 @@
   "description": "",
   "main": "src/server.js",
   "scripts": {
-    "publish": "surge ./",
+    "publish": "webpack && surge ./",
     "start:fe:dev": "webpack-dev-server --hot --inline --content-base ./",
-    "build": "webpack",
     "test": "tape -r babel-register 'src/**/*spec.js'"
   },
   "babel": {
